@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "orion-quant"
+version = "0.1.0"
+description = "Student-friendly quantitative research and paper trading simulator"
+requires-python = ">=3.10"
+dependencies = ["streamlit>=1.35", "pandas>=2.0", "numpy>=1.26", "plotly>=5.20", "yfinance>=0.2.40"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

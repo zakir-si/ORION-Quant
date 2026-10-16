@@ -46,19 +46,23 @@ with st.sidebar:
     fee_pct = st.number_input("Fee (%) per trade", min_value=0.0, max_value=2.0, value=0.10, step=0.05)
     slippage_pct = st.number_input("Slippage (%)", min_value=0.0, max_value=2.0, value=0.05, step=0.05)
     position_pct = st.slider("Maximum invested", 10, 100, 95) / 100
-    run = st.button("Run backtest", type="primary", use_container_width=True)
+    replay_bars = st.slider("Historical replay cutoff (bars)", 30, 500, 500, 10)
+    run = st.button("Run / refresh data", type="primary", use_container_width=True)
 
 if "result" not in st.session_state:
     st.session_state.result = None
-if run or st.session_state.result is None:
+# Changing the replay slider recomputes the simulation at that historical point.
+replay_changed = st.session_state.get("last_replay_bars") != replay_bars
+if run or st.session_state.result is None or replay_changed:
     try:
         with st.spinner("Preparing prices and running the simulation..."):
             if source == "Synthetic demo data":
-                prices = make_demo_prices(days=500)
+                all_prices = make_demo_prices(days=500)
                 shown_symbol = "SYNTHETIC (not real market data)"
             else:
-                prices = download_prices(symbol, period)
+                all_prices = download_prices(symbol, period)
                 shown_symbol = symbol.upper()
+            prices = all_prices.iloc[:min(replay_bars, len(all_prices))].copy()
             close = prices["Close"]
             if strategy == "Moving average":
                 signal = moving_average_signal(close, fast=fast, slow=slow)
@@ -70,12 +74,14 @@ if run or st.session_state.result is None:
                                   fee_rate=fee_pct / 100, slippage_rate=slippage_pct / 100,
                                   max_position_fraction=position_pct)
             st.session_state.result = (prices, result, shown_symbol, strategy)
+            st.session_state.last_replay_bars = replay_bars
     except Exception as exc:
         st.error(f"Could not run the simulation: {exc}")
         st.stop()
 
 prices, result, shown_symbol, used_strategy = st.session_state.result
-st.caption(f"Showing: {shown_symbol} · {used_strategy} · {len(prices)} daily bars")
+st.caption(f"Showing historical replay: {shown_symbol} · {used_strategy} · {len(prices)} of up to 500 bars")
+st.progress(min(1.0, len(prices) / 500), text="Historical replay progress — this is not a live market feed")
 metrics = summarize(result)
 cols = st.columns(4)
 for col, key in zip(cols, ["Total return", "Annualized volatility", "Sharpe ratio (rf=0)", "Maximum drawdown"]):
@@ -120,6 +126,7 @@ with st.expander("Research notes and limitations"):
     - The strategy signal is delayed by one bar before execution at the next open.
     - Costs are charged on traded notional; fractional shares are allowed for learning.
     - Yahoo Finance is an unofficial third-party data source and can be delayed or incomplete.
-    - No live orders are placed. Never paste API keys or brokerage passwords into this app.
+    - This historical replay is not a live feed. No live orders are placed.
+    - Never paste API keys or brokerage passwords into this app.
     - Test multiple periods and include realistic costs before drawing conclusions.
     """)

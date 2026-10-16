@@ -25,6 +25,10 @@ def test_buy_and_hold_does_not_rebalance_every_day():
 
 def test_trading_costs_reduce_equity_on_same_prices():
     prices = make_demo_prices(days=60, seed=12)
+    prices.loc[:, "Open"] = 100.0
+    prices.loc[:, "Close"] = 100.0
+    prices.loc[:, "High"] = 101.0
+    prices.loc[:, "Low"] = 99.0
     signal = buy_and_hold_signal(prices["Close"])
     free_result = run_backtest(prices, signal, fee_rate=0, slippage_rate=0)
     costly_result = run_backtest(prices, signal, fee_rate=0.01, slippage_rate=0.01)

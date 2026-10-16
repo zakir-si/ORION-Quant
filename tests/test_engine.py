@@ -16,3 +16,16 @@ def test_first_bar_does_not_use_same_close_signal():
     result = run_backtest(prices, buy_and_hold_signal(prices["Close"]))
     assert result["ledger"]["Shares"].iloc[0] == 0
     assert result["ledger"]["Shares"].iloc[1] > 0
+
+def test_buy_and_hold_does_not_rebalance_every_day():
+    prices = make_demo_prices(days=30, seed=11)
+    result = run_backtest(prices, buy_and_hold_signal(prices["Close"]))
+    assert len(result["trades"]) == 1
+
+
+def test_trading_costs_reduce_equity_on_same_prices():
+    prices = make_demo_prices(days=60, seed=12)
+    signal = buy_and_hold_signal(prices["Close"])
+    free_result = run_backtest(prices, signal, fee_rate=0, slippage_rate=0)
+    costly_result = run_backtest(prices, signal, fee_rate=0.01, slippage_rate=0.01)
+    assert costly_result["ending_equity"] < free_result["ending_equity"]

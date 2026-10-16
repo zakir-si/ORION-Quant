@@ -36,7 +36,7 @@ with st.sidebar:
     strategy = st.selectbox("Rule", ["Moving average", "Mean reversion", "Buy & hold"])
     if strategy == "Moving average":
         fast = st.slider("Fast average", 3, 40, 10)
-        slow = st.slider("Slow average", 15, 150, 40)
+        slow = st.slider("Slow average", fast + 1, 150, max(40, fast + 1))
     else:
         fast, slow = 10, 40
     window = st.slider("Mean window", 5, 60, 20) if strategy == "Mean reversion" else 20

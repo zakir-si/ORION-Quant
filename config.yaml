@@ -1,0 +1,7 @@
+# Defaults used as a reference by the dashboard.
+starting_cash: 100000
+fee_rate: 0.001
+slippage_rate: 0.0005
+max_position_fraction: 0.95
+max_drawdown_limit: 0.20
+max_daily_loss_limit: 0.05
